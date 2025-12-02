@@ -405,8 +405,6 @@ async def shutdown_db_client():
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
-
 # Allow requests from your frontend
 origins = [
     "https://frontendv2-x6m0.onrender.com",
@@ -424,8 +422,6 @@ app.add_middleware(
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-
-app = FastAPI()
 
 # Allow CORS if needed
 origins = ["*"]  # or your frontend URL
@@ -458,3 +454,4 @@ async def login(user: LoginModel):
     if user.email == "test@test.com" and user.password == "12345678":
         return {"access_token": "fake-jwt-token", "user": {"name": "Test", "email": user.email}}
     raise HTTPException(status_code=401, detail="Invalid credentials")
+
