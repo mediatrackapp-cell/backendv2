@@ -54,12 +54,14 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://frontendv2-x6m0.onrender.com",
-        "http://localhost:3000"
+        "http://localhost:3000",
+        "https://backendv2-t8my.onrender.com"  # add this
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Logging
 logging.basicConfig(
@@ -301,3 +303,4 @@ app.include_router(api_router)
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
