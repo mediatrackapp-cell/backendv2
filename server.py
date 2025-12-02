@@ -347,3 +347,13 @@ async def resend_verification(email: dict):
     return {"message": "Verification email resent successfully"}
 
 
+
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],   # allow all origins for testing
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
