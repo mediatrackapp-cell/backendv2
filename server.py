@@ -304,3 +304,15 @@ app.include_router(api_router)
 async def shutdown_db_client():
     client.close()
 
+
+////////////////////////////
+@app.get("/debug/env")
+async def debug_env():
+    return {
+        "mongo": bool(os.getenv("MONGO_URL")),
+        "db_name": os.getenv("DB_NAME"),
+        "email_user": os.getenv("EMAIL_USERNAME"),
+        "email_password": "SET" if os.getenv("EMAIL_PASSWORD") else "MISSING",
+        "frontend": os.getenv("FRONTEND_URL"),
+        "secret_key": "SET" if os.getenv("SECRET_KEY") else "MISSING"
+    }
