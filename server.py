@@ -402,3 +402,24 @@ logger = logging.getLogger(__name__)
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+# Allow requests from your frontend
+origins = [
+    "https://frontendv2-x6m0.onrender.com",  # replace with your frontend URL
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Your routes below
+# @app.post("/api/auth/signup") ...
