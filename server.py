@@ -52,7 +52,7 @@ api_router = APIRouter(prefix="/api")
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
+    allow_origins=["*",
         "https://frontendv2-x6m0.onrender.com",
         "http://localhost:3000",
         "https://backendv2-t8my.onrender.com"  # add this
@@ -345,4 +345,5 @@ async def resend_verification(email: dict):
     send_verification_email(user_email, new_token, user_doc.get("name", ""))
 
     return {"message": "Verification email resent successfully"}
+
 
