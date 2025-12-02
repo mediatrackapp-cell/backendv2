@@ -317,3 +317,32 @@ async def debug_env():
         "secret_key": "SET" if os.getenv("SECRET_KEY") else "MISSING"
     }
 
+@api_router.post("/auth/resend-verification")
+async def resend_verification(email: dict):
+    user_email = email.get("email")
+    if not user_email:
+        raise HTTPException(status_code=400, detail="Email is required")
+
+    # Find user
+    user_doc = await db.users.find_one({"email": user_email})
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Check if already verified
+    if user_doc.get("is_verified"):
+        return {"message": "Email is already verified"}
+
+    # Generate new token
+    new_token = secrets.token_urlsafe(32)
+
+    # Update database
+    await db.users.update_one(
+        {"email": user_email},
+        {"$set": {"verification_token": new_token}}
+    )
+
+    # Send email
+    send_verification_email(user_email, new_token, user_doc.get("name", ""))
+
+    return {"message": "Verification email resent successfully"}
+
