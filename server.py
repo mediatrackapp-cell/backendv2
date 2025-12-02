@@ -348,8 +348,6 @@ async def resend_verification(email: dict):
 
 
 
-from fastapi.middleware.cors import CORSMiddleware
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],   # allow all origins for testing
@@ -357,3 +355,4 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
