@@ -402,7 +402,6 @@ logger = logging.getLogger(__name__)
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -410,7 +409,7 @@ app = FastAPI()
 
 # Allow requests from your frontend
 origins = [
-    "https://frontendv2-x6m0.onrender.com",  # replace with your frontend URL
+    "https://frontendv2-x6m0.onrender.com",
 ]
 
 app.add_middleware(
@@ -421,5 +420,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Your routes below
-# @app.post("/api/auth/signup") ...
+# server.py
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
+app = FastAPI()
+
+# Allow CORS if needed
+origins = ["*"]  # or your frontend URL
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Models
+class SignupModel(BaseModel):
+    name: str
+    email: str
+    password: str
+
+class LoginModel(BaseModel):
+    email: str
+    password: str
+
+# Routes
+@app.post("/auth/signup")
+async def signup(user: SignupModel):
+    # For now, just return success
+    return {"message": f"User {user.name} registered successfully"}
+
+@app.post("/auth/login")
+async def login(user: LoginModel):
+    if user.email == "test@test.com" and user.password == "12345678":
+        return {"access_token": "fake-jwt-token", "user": {"name": "Test", "email": user.email}}
+    raise HTTPException(status_code=401, detail="Invalid credentials")
