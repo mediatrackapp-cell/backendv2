@@ -5,9 +5,6 @@ import logging
 import threading
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
-import time
-from pymongo import MongoClient
-import smtplib
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
@@ -162,63 +159,38 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         user_doc["created_at"] = datetime.fromisoformat(user_doc["created_at"])
     return User(**user_doc)
 
-def send_verification_email(email: str, token: str, name: str, retries=3, delay=5):
-    """Send verification email with retry logic"""
+def send_verification_email(email: str, token: str, name: str):
     if not EMAIL_USERNAME or not EMAIL_PASSWORD:
         logger.warning("Email credentials not configured; skipping email send")
         return
-
-    for attempt in range(1, retries + 1):
-        try:
-            verification_link = f"{FRONTEND_URL}?verify={token}"
-            msg = MIMEMultipart("alternative")
-            msg["Subject"] = "Verify Your Email - Media Tracker"
-            msg["From"] = EMAIL_USERNAME
-            msg["To"] = email
-            html = f"""
-            <html>
-              <body>
-                <h2>Welcome {name}!</h2>
-                <p>Click below to verify your email:</p>
-                <a href="{verification_link}">Verify Email</a>
-              </body>
-            </html>
-            """
-            msg.attach(MIMEText(html, "html"))
-            with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as server:
-                server.starttls()
-                server.login(EMAIL_USERNAME, EMAIL_PASSWORD)
-                server.send_message(msg)
-            logger.info(f"Verification email sent to {email}")
-            return  # success, exit function
-        except Exception as e:
-            logger.error(f"Attempt {attempt} failed to send email to {email}: {e}")
-            if attempt < retries:
-                logger.info(f"Retrying in {delay} seconds...")
-                time.sleep(delay)
-            else:
-                logger.error(f"All {retries} attempts failed for {email}")
-
+    try:
+        verification_link = f"{FRONTEND_URL}?verify={token}"
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "Verify Your Email - Media Tracker"
+        msg["From"] = EMAIL_USERNAME
+        msg["To"] = email
+        html = f"""
+        <html>
+          <body>
+            <h2>Welcome {name}!</h2>
+            <p>Click below to verify your email:</p>
+            <a href="{verification_link}">Verify Email</a>
+          </body>
+        </html>
+        """
+        msg.attach(MIMEText(html, "html"))
+        with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as server:
+            server.starttls()
+            server.login(EMAIL_USERNAME, EMAIL_PASSWORD)
+            server.send_message(msg)
+        logger.info(f"Verification email sent to {email}")
+    except Exception as e:
+        logger.error(f"Email send failed: {e}")
+        
 def send_verification_email_async(email, token, name):
-    threading.Thread(target=send_verification_email, args=(email, token, name), daemon=True).start()
+    threading.Thread(target=send_verification_email, args=(email, token, name)).start()
 
-# ================= WATCHER =================
-def watch_new_users():
-    client = MongoClient(MONGO_URL)
-    db = client[DB_NAME]
-    pipeline = [{"$match": {"operationType": "insert"}}]  # watch new inserts only
-    with db.users.watch(pipeline) as stream:
-        for change in stream:
-            user_doc = change["fullDocument"]
-            email = user_doc.get("email")
-            token = user_doc.get("verification_token")
-            name = user_doc.get("name", "")
-            if email and token:
-                send_verification_email_async(email, token, name)
-                logger.info(f"Triggered verification email for new user: {email}")
 
-# ================= START WATCHER =================
-threading.Thread(target=watch_new_users, daemon=True).start()
 
 # ========== AUTH ROUTES ==========
 @api_router.post("/auth/signup")
@@ -383,6 +355,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 
