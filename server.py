@@ -35,7 +35,7 @@ EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
 EMAIL_USERNAME = os.environ.get("EMAIL_USERNAME")
 EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
-FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://frontendv2-x6m0.onrender.com")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
 
 # ========== DATABASE ==========
 if not MONGO_URL:
@@ -383,6 +383,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 
