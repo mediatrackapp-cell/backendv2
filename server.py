@@ -2,6 +2,7 @@
 import os
 import secrets
 import logging
+import threading
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 
@@ -191,6 +192,9 @@ def send_verification_email(email: str, token: str, name: str):
         logger.info(f"Verification email sent to {email}")
     except Exception as e:
         logger.error(f"Email send failed: {e}")
+def send_verification_email_async(email, token, name):
+    threading.Thread(target=send_verification_email, args=(email, token, name)).start()
+
 
 # ========== AUTH ROUTES ==========
 @api_router.post("/auth/signup")
@@ -212,7 +216,7 @@ async def signup(user_data: UserSignup):
     user_dict["created_at"] = user_dict["created_at"].isoformat()
     await db.users.insert_one(user_dict)
 
-    send_verification_email(user.email, verification_token, user.name)
+    send_verification_email_async(user.email, verification_token, user.name)
 
     return {"message": "Registration successful. Check your email!", "email": user.email}
 
@@ -355,4 +359,5 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
