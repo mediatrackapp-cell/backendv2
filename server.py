@@ -160,13 +160,11 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         user_doc["created_at"] = datetime.fromisoformat(user_doc["created_at"])
     return User(**user_doc)
 
-def send_verification_email(email: str, token: str, name: str):
-    if not EMAIL_USERNAME or not EMAIL_PASSWORD:
-        logger.warning("Email credentials not configured; skipping email send")
-        return
-
+def send_verification_email_debug(email: str, token: str, name: str):
     try:
+        logger.info("Starting email send process...")
         verification_link = f"{FRONTEND_URL}?verify={token}"
+        logger.info(f"Verification link: {verification_link}")
 
         msg = MIMEMultipart("alternative")
         msg["Subject"] = "Verify Your Email - Media Tracker"
@@ -184,14 +182,18 @@ def send_verification_email(email: str, token: str, name: str):
         """
         msg.attach(MIMEText(html, "html"))
 
+        logger.info(f"Connecting to SMTP server {EMAIL_HOST}:{EMAIL_PORT}")
         with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as server:
             server.starttls()
+            logger.info("Logging in...")
             server.login(EMAIL_USERNAME, EMAIL_PASSWORD)
+            logger.info("Sending email...")
             server.send_message(msg)
-
         logger.info(f"Verification email sent to {email}")
+
     except Exception as e:
         logger.error(f"Email send failed: {e}")
+
 def send_verification_email_async(email, token, name):
     threading.Thread(target=send_verification_email, args=(email, token, name)).start()
 
@@ -359,5 +361,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
