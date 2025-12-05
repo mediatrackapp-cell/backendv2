@@ -160,10 +160,6 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     return User(**user_doc)
 
 def send_verification_email(email: str, token: str, name: str):
-    if not EMAIL_USERNAME or not EMAIL_PASSWORD:
-        logger.warning("Email credentials not configured; skipping email send")
-        return
-
     try:
         verification_link = f"{FRONTEND_URL}?verify={token}"
 
@@ -174,28 +170,32 @@ def send_verification_email(email: str, token: str, name: str):
 
         html = f"""
         <html>
-          <body>
+        <body>
             <h2>Welcome {name}!</h2>
             <p>Click below to verify your email:</p>
             <a href="{verification_link}">Verify Email</a>
-          </body>
+        </body>
         </html>
         """
 
         msg.attach(MIMEText(html, "html"))
 
-        # ✔ Correct Gmail 587 STARTTLS sequence
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.ehlo()              # identify
-            server.starttls()          # upgrade to TLS
-            server.ehlo()              # re-identify after TLS
-            server.login(EMAIL_USERNAME, EMAIL_PASSWORD)
-            server.sendmail(EMAIL_USERNAME, email, msg.as_string())
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.ehlo()
+        server.starttls()
+        server.login(EMAIL_USERNAME, EMAIL_PASSWORD)
+        server.send_message(msg)
+        server.quit()
 
         logger.info(f"Verification email sent to {email}")
 
     except Exception as e:
         logger.error(f"Email send failed: {e}")
+
+        
+def send_verification_email_async(email, token, name):
+threading.Thread(target=send_verification_email, args=(email, token, name)).start()
+
 
 
 
@@ -362,6 +362,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 
