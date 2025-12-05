@@ -198,7 +198,6 @@ threading.Thread(target=send_verification_email, args=(email, token, name)).star
 
 
 
-
 # ========== AUTH ROUTES ==========
 @api_router.post("/auth/signup")
 async def signup(user_data: UserSignup):
@@ -362,6 +361,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 
