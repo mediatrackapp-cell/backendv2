@@ -196,7 +196,7 @@ def send_verification_email(email: str, token: str, name: str):
 
         
 def send_verification_email_async(email, token, name):
-threading.Thread(target=send_verification_email, args=(email, token, name)).start()
+    threading.Thread(target=send_verification_email, args=(email, token, name)).start()
 
 
 
@@ -363,6 +363,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 
