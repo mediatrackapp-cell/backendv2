@@ -160,6 +160,10 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     return User(**user_doc)
 
 def send_verification_email(email: str, token: str, name: str):
+    if not EMAIL_USERNAME or not EMAIL_PASSWORD:
+        logger.warning("Email credentials not configured; skipping email send")
+        return
+
     try:
         verification_link = f"{FRONTEND_URL}?verify={token}"
 
@@ -170,22 +174,20 @@ def send_verification_email(email: str, token: str, name: str):
 
         html = f"""
         <html>
-        <body>
+          <body>
             <h2>Welcome {name}!</h2>
             <p>Click below to verify your email:</p>
             <a href="{verification_link}">Verify Email</a>
-        </body>
+          </body>
         </html>
         """
 
         msg.attach(MIMEText(html, "html"))
 
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.ehlo()
-        server.starttls()
-        server.login(EMAIL_USERNAME, EMAIL_PASSWORD)
-        server.send_message(msg)
-        server.quit()
+        # ✔ Correct Gmail mode
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(EMAIL_USERNAME, EMAIL_PASSWORD)
+            server.sendmail(EMAIL_USERNAME, email, msg.as_string())
 
         logger.info(f"Verification email sent to {email}")
 
