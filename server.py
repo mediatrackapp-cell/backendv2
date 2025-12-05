@@ -159,39 +159,43 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         user_doc["created_at"] = datetime.fromisoformat(user_doc["created_at"])
     return User(**user_doc)
 
-EMAIL_USER = os.getenv("EMAIL_USERNAME")
-EMAIL_PASS = os.getenv("EMAIL_PASSWORD")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+def send_verification_email(email: str, token: str, name: str):
+    if not EMAIL_USERNAME or not EMAIL_PASSWORD:
+        logger.warning("Email credentials not configured; skipping email send")
+        return
 
-def send_verification_email(email_username, token, name):
     try:
-        verification_link = f"{FRONTEND_URL}/verify?token={token}"
+        verification_link = f"{FRONTEND_URL}?verify={token}"
 
         msg = MIMEMultipart("alternative")
-        msg["Subject"] = "Verify your email"
-        msg["From"] = EMAIL_USER
+        msg["Subject"] = "Verify Your Email - Media Tracker"
+        msg["From"] = EMAIL_USERNAME
         msg["To"] = email
 
-        html_content = f"""
+        html = f"""
         <html>
-        <body>
-            <h3>Hello {name},</h3>
-            <p>Click the link below to verify your email:</p>
-            <a href="{verification_link}">{verification_link}</a>
-        </body>
+          <body>
+            <h2>Welcome {name}!</h2>
+            <p>Click below to verify your email:</p>
+            <a href="{verification_link}">Verify Email</a>
+          </body>
         </html>
         """
 
-        msg.attach(MIMEText(html_content, "html"))
+        msg.attach(MIMEText(html, "html"))
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(EMAIL_USER, EMAIL_PASS)
-            server.sendmail(EMAIL_USER, email, msg.as_string())
+        # ✔ Correct Gmail 587 STARTTLS sequence
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.ehlo()              # identify
+            server.starttls()          # upgrade to TLS
+            server.ehlo()              # re-identify after TLS
+            server.login(EMAIL_USERNAME, EMAIL_PASSWORD)
+            server.sendmail(EMAIL_USERNAME, email, msg.as_string())
 
-        print("✔ Email sent successfully")
+        logger.info(f"Verification email sent to {email}")
 
     except Exception as e:
-        print("❌ Email sending failed:", e)
+        logger.error(f"Email send failed: {e}")
 
 
 
@@ -358,6 +362,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 
